@@ -1,5 +1,14 @@
 // connect to Namespace
 function joinNs(endpoint) {
+  if (nsSocket) {
+    // close socket
+    nsSocket.close();
+
+    // remove the eventListener before it's added again
+    document
+      .getElementById('user-input')
+      .removeEventListener('submit', formSubmission);
+  }
   nsSocket = io(`http://localhost:9000${endpoint}`);
   nsSocket.on('nsRoomLoad', (nsRooms) => {
     // get rooms list (html)
@@ -19,9 +28,9 @@ function joinNs(endpoint) {
 
     // add click listener to each room
     roomNodes.forEach((room) => {
-      room.addEventListener('click', (element) => {
+      room.addEventListener('click', (e) => {
         // join the room
-        console.log('switch room');
+        joinRoom(room.innerText);
       });
     });
 
@@ -39,11 +48,13 @@ function joinNs(endpoint) {
 
   document
     .querySelector('.message-form')
-    .addEventListener('submit', (event) => {
-      event.preventDefault();
-      const newMessage = document.getElementById('user-message').value;
-      nsSocket.emit('newMessageToServer', { text: newMessage });
-    });
+    .addEventListener('submit', formSubmission);
+}
+
+function formSubmission(event) {
+  event.preventDefault();
+  const newMessage = document.getElementById('user-message').value;
+  nsSocket.emit('newMessageToServer', { text: newMessage });
 }
 
 function buildHTML(msg) {
